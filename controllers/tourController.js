@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const Tour = require('../models/tourModel');
 
+const APIFeatures = require('../utils/apiFeatures');
+
 // route heandle
-//127.0.0.1:3000/api/v1/tours?sort=-ratingsAverage,-price&limit=5
 exports.aliasTopTours = async (req, res, next) => {
     req.query.limit = '5';
     req.query.sort = '-ratingsAverage,-price';
@@ -11,62 +12,17 @@ exports.aliasTopTours = async (req, res, next) => {
     next();
 };
 exports.getAllTours = async (req, res) => {
-    console.log(req.query);
     try {
-        // Build query
+        const features = new APIFeatures(
+            Tour.find(),
+            req.query
+        )
+            .filter()
+            .sort()
+            .limitFields()
+            .paginate();
 
-        // Destructuring with ... => then to object, so it wont point to one object
-        const queryObj = { ...req.query };
-        const excludedFields = [
-            'page',
-            'sort',
-            'limit',
-            'fields',
-        ];
-
-        // Filtering
-        excludedFields.forEach((el) => delete queryObj[el]);
-
-        // Advanced filtering
-        let queryStr = JSON.stringify(queryObj);
-        queryStr = queryStr.replace(
-            /\b(gte|gt|lte|lt)\b/g,
-            (match) => {
-                return `$${match}`;
-            }
-        );
-        let query = Tour.find(JSON.parse(queryStr));
-        // sorting
-        if (req.query.sort) {
-            // replace for ading more than one option for sorting
-            query.sort(req.query.sort.replaceAll(',', ' '));
-        } else {
-            query.sort('-createdAt');
-        }
-        if (req.query.fields) {
-            query = query.select(
-                req.query.fields.replaceAll(',', ' ')
-            );
-        } else {
-            // minus means excluding
-            // so it deleted __v from query
-            query = query.select('-__v');
-        }
-
-        // Pagination
-        const itemsPerPage = req.query.limit * 1 || 100;
-        const page = req.query.page * 1 || 1;
-        query = query
-            .skip(itemsPerPage * (page - 1))
-            .limit(itemsPerPage);
-        if (req.query.page) {
-            const toursAmount = await Tour.countDocuments();
-            if (toursAmount <= itemsPerPage * (page - 1))
-                throw new Error(
-                    'This page doesn`t not exist'
-                );
-        }
-        const tours = await query;
+        const tours = await features.query;
         res.json({
             status: 'success',
             results: tours.length,
