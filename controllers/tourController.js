@@ -1,4 +1,4 @@
-const { default: mongoose } = require('mongoose');
+const { default: mongoose, Query } = require('mongoose');
 const Tour = require('../models/tourModel');
 
 // const tours = JSON.parse(
@@ -10,9 +10,35 @@ const Tour = require('../models/tourModel');
 // route heandle
 
 exports.getAllTours = async (req, res) => {
+    console.log(req.query);
     try {
-        const tours = await Tour.find();
+        // Build query
 
+        // Destructuring with ... => then to object, so it wont point to one object
+        const queryObj = { ...req.query };
+        const excludedFields = [
+            'page',
+            'sort',
+            'limit',
+            'fields',
+        ];
+
+        // Filtering
+        excludedFields.forEach((el) => delete queryObj[el]);
+
+        // Advanced filtering
+        let queryStr = JSON.stringify(queryObj);
+
+        queryStr = queryStr.replace(
+            /\b(gte|gt|lte|lt)\b/g,
+            (match) => {
+                return `$${match}`;
+            }
+        );
+
+        const query = Tour.find(JSON.parse(queryStr));
+
+        const tours = await query;
         res.json({
             status: 'success',
             results: tours.length,
