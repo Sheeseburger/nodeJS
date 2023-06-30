@@ -28,20 +28,42 @@ exports.getAllTours = async (req, res) => {
 
         // Advanced filtering
         let queryStr = JSON.stringify(queryObj);
-
         queryStr = queryStr.replace(
             /\b(gte|gt|lte|lt)\b/g,
             (match) => {
                 return `$${match}`;
             }
         );
-
         let query = Tour.find(JSON.parse(queryStr));
+        // sorting
         if (req.query.sort) {
             // replace for ading more than one option for sorting
-            query.sort(req.query.sort.replace(',', ' '));
+            query.sort(req.query.sort.replaceAll(',', ' '));
         } else {
             query.sort('-createdAt');
+        }
+        if (req.query.fields) {
+            query = query.select(
+                req.query.fields.replaceAll(',', ' ')
+            );
+        } else {
+            // minus means excluding
+            // so it deleted __v from query
+            query = query.select('-__v');
+        }
+
+        // Pagination
+        const itemsPerPage = req.query.limit * 1 || 100;
+        const page = req.query.page * 1 || 1;
+        query = query
+            .skip(itemsPerPage * (page - 1))
+            .limit(itemsPerPage);
+        if (req.query.page) {
+            const toursAmount = await Tour.countDocuments();
+            if (toursAmount <= itemsPerPage * (page - 1))
+                throw new Error(
+                    'This page doesn`t not exist'
+                );
         }
         const tours = await query;
         res.json({
@@ -54,7 +76,7 @@ exports.getAllTours = async (req, res) => {
     } catch (error) {
         res.status(404).json({
             status: 'fail',
-            message: error,
+            message: String(error),
         });
     }
 };
