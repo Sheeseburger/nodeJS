@@ -8,7 +8,9 @@
     "rules": {
         "prettier/prettier": [
             "error",
-            { "endOfLine": "auto" }
+            {
+                "endOfLine": "off" // This is what LF, CRLF, or CR is all about
+            }
         ],
         "spaced-comment": "off",
         "no-console": "off", // !!! turn for deleting console.log()
