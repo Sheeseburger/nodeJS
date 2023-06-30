@@ -1,0 +1,31 @@
+{
+    "name": "natours",
+    "version": "1.0.0",
+    "description": "Learning node,express and mongoDB",
+    "main": "app.js",
+    "scripts": {
+        "start": "npx nodemon server.js",
+        "start:prod": "set NODE_ENV=production&&nodemon server.js"
+    },
+    "author": "Mishka Tishka",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^16.3.1",
+        "eslint": "^8.43.0",
+        "eslint-config-airbnb": "^19.0.4",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-import": "^2.27.5",
+        "eslint-plugin-jsx-a11y": "^6.7.1",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "eslint-plugin-react": "^7.32.2",
+        "express": "^4.18.2",
+        "mongodb": "^5.6.0",
+        "mongoose": "^7.3.1",
+        "morgan": "^1.10.0",
+        "prettier": "^2.8.8"
+    },
+    "devDependencies": {
+        "cross-env": "^7.0.3"
+    }
+}
