@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 
+const validator = require('validator');
+
 const tourSchema = new mongoose.Schema(
     {
         name: {
@@ -8,6 +10,18 @@ const tourSchema = new mongoose.Schema(
             required: [true, 'A tour must have a name'],
             unique: true,
             trim: true,
+            maxlength: [
+                40,
+                'A tour name must have less or equal 40 characters',
+            ],
+            minlength: [
+                10,
+                'A tour name must have more or equal 10 characters',
+            ],
+            // validate: [
+            //     validator.isAlpha,
+            //     ' A tour must contain only charactercs',
+            // ],
         },
         slug: String,
         price: {
@@ -32,11 +46,29 @@ const tourSchema = new mongoose.Schema(
                 'A tour must have a difficulty',
             ],
             trim: true,
+            enum: {
+                values: ['easy', 'medium', 'difficult'],
+                message:
+                    'Difficultly either: easy, medium, difficult',
+            },
         },
-        ratingsAverage: { type: Number, default: 4.5 },
+        ratingsAverage: {
+            type: Number,
+            default: 4.5,
+            min: [1, 'A tour must be above 1.0'],
+            max: [5, 'A tour must be below 5.0'],
+        },
         ratingsQuantity: { type: Number, default: 0 },
         priceDiscount: {
             type: Number,
+            validate: {
+                validator: function (val) {
+                    // this works only with new documents, NOT UPDATE!!!
+                    return val < this.price;
+                },
+                message:
+                    'Discount price ({VALUE}) should be below regular price',
+            },
         },
         summary: {
             type: String,
@@ -46,10 +78,10 @@ const tourSchema = new mongoose.Schema(
         description: {
             type: String,
             trim: true,
-            required: [
-                true,
-                'A tour must have a description',
-            ],
+            // required: [
+            //     true,
+            //     'A tour must have a description',
+            // ],
         },
         imageCover: {
             type: String,
