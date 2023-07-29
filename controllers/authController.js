@@ -1,5 +1,6 @@
 const { promisify } = require('util');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const User = require('./../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const jwt = require('jsonwebtoken');
@@ -12,6 +13,15 @@ const signToken = (id) => {
     });
 };
 
+const createSendToken = (user, statucCode, res) => {
+    const token = signToken(user);
+
+    res.status(statucCode).json({
+        status: 'success',
+        token,
+    });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
     const newUser = await User.create({
         name: req.body.name,
@@ -20,16 +30,7 @@ exports.signup = catchAsync(async (req, res, next) => {
         passwordConfirm: req.body.passwordConfirm,
         role: req.body.role,
     });
-
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
-        status: 'success',
-        token,
-        data: {
-            user: newUser,
-        },
-    });
+    createSendToken(newUser._id, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -60,13 +61,7 @@ exports.login = catchAsync(async (req, res, next) => {
             401
         );
     }
-
-    const token = signToken(user._id);
-
-    res.status(200).json({
-        status: 'success',
-        token,
-    });
+    createSendToken(user._id, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -115,7 +110,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
-        console.log(req.user);
         if (!roles.includes(req.user.role)) {
             return next(
                 new AppError(
@@ -203,7 +197,8 @@ exports.resetPassword = catchAsync(
         user.passwordResetExpires = undefined;
         await user.save();
         // update changedPasswordAt
-        
+        createSendToken(user._id, 201, res);
+
         const token = signToken(user._id);
 
         res.status(201).json({
@@ -211,6 +206,34 @@ exports.resetPassword = catchAsync(
             token,
         });
         // log theer user in, send JWT
-        console.log(user);
+    }
+);
+
+exports.updatePassword = catchAsync(
+    async (req, res, next) => {
+        // get user
+        const user = await User.findById(
+            req.user._id
+        ).select('+password');
+        // check if prev password is correct
+        if (
+            !(await user.correctPassword(
+                req.body.passwordCurrent,
+                user.password
+            ))
+        ) {
+            return next(
+                new AppError(
+                    'Current password is wrong',
+                    401
+                )
+            );
+        }
+        // update password
+        user.password = req.body.password;
+        user.passwordConfirm = req.body.passwordConfirm;
+        await user.save();
+        // log user in, send JWT
+        createSendToken(user._id, 201, res);
     }
 );
