@@ -80,7 +80,9 @@ exports.protect = catchAsync(async (req, res, next) => {
     const freshUser = await User.findById(decoded.id);
     if (!freshUser) return next(new AppError('This user was deleted', 401));
     // Check if user changed password after token was isued
-
+    console.log(freshUser);
+    console.log(decoded.iat);
+    console.log(freshUser.changedPasswordAfter(decoded.iat));
     if (freshUser.changedPasswordAfter(decoded.iat))
         return next(
             new AppError('User changed password. Please log in again.', 401)
@@ -164,13 +166,12 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     // update changedPasswordAt
     createSendToken(user, 201, res);
 
-    const token = signToken(user._id);
+    // const token = signToken(user._id);
 
-    res.status(201).json({
-        status: 'success',
-        token,
-    });
-    // log theer user in, send JWT
+    // res.status(201).json({
+    //     status: 'success',
+    //     token,
+    // });
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
