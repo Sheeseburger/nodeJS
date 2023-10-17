@@ -13,10 +13,21 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.patch('/updateMe', authController.protect, userController.updateMe);
 router.delete('/deleteMe', authController.protect, userController.deleteMe);
 
-router.patch('/updateMyPassword', authController.protect, authController.updatePassword);
+router.patch(
+    '/updateMyPassword',
+    authController.protect,
+    authController.updatePassword
+);
 
-router.route('/').get(userController.GetAllUsers).post(userController.createUser);
+router
+    .route('/')
+    .get(userController.GetAllUsers)
+    .post(userController.createUser);
 
-router.route('/:id').get(userController.getUser).patch(userController.updateUser).delete(userController.deleteUser);
+router
+    .route('/:id')
+    .get(userController.getUser)
+    .patch(userController.updateUser)
+    .delete(userController.deleteUser);
 
 module.exports = router;
