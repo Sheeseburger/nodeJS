@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-
 const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
@@ -34,22 +33,15 @@ const tourSchema = new mongoose.Schema(
         },
         maxGroupSize: {
             type: Number,
-            required: [
-                true,
-                'A tour must have a group size',
-            ],
+            required: [true, 'A tour must have a group size'],
         },
         difficulty: {
             type: String,
-            required: [
-                true,
-                'A tour must have a difficulty',
-            ],
+            required: [true, 'A tour must have a difficulty'],
             trim: true,
             enum: {
                 values: ['easy', 'medium', 'difficult'],
-                message:
-                    'Difficultly either: easy, medium, difficult',
+                message: 'Difficultly either: easy, medium, difficult',
             },
         },
         ratingsAverage: {
@@ -85,10 +77,7 @@ const tourSchema = new mongoose.Schema(
         },
         imageCover: {
             type: String,
-            required: [
-                true,
-                'A tour must have a cover image',
-            ],
+            required: [true, 'A tour must have a cover image'],
         },
         images: [String],
         createdAt: {
@@ -101,6 +90,27 @@ const tourSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        startLocation: {
+            // GeoJSON
+            type: {
+                type: String,
+                default: 'Point',
+                enum: ['Point'],
+            },
+            coordinates: [Number],
+            address: String,
+            description: String,
+        },
+        locations: [
+            {
+                type: { type: String, default: 'Point', enum: ['Point'] },
+                coordinates: [Number],
+                address: String,
+                description: String,
+                day: Number,
+            },
+        ],
+        guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
     },
 
     {
@@ -123,6 +133,14 @@ tourSchema.pre('save', function (next) {
     this.slug = slugify(this.name, { lower: true });
     next();
 });
+// embedded middleweare
+// tourSchema.pre('save', async function (next) {
+//     const guidesPromises = this.guides.map(async (id) => {
+//         await User.findById(id);
+//     });
+//     this.guides = await Promise.all(guidesPromises);
+//     next();
+// });
 
 // Query middleware
 tourSchema.pre(/^find/, function (next) {
@@ -131,6 +149,13 @@ tourSchema.pre(/^find/, function (next) {
     next();
 });
 
+tourSchema.pre(/find/, function (next) {
+    this.populate({
+        path: 'guides',
+        select: '-__v -passwordChangedAt',
+    });
+    next();
+});
 // Aggregation middleware
 
 tourSchema.pre('aggregate', function (next) {

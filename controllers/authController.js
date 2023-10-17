@@ -80,9 +80,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     const freshUser = await User.findById(decoded.id);
     if (!freshUser) return next(new AppError('This user was deleted', 401));
     // Check if user changed password after token was isued
-    console.log(freshUser);
-    console.log(decoded.iat);
-    console.log(freshUser.changedPasswordAfter(decoded.iat));
     if (freshUser.changedPasswordAfter(decoded.iat))
         return next(
             new AppError('User changed password. Please log in again.', 401)
